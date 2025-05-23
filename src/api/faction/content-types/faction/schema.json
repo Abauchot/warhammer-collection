@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "factions",
+  "info": {
+    "singularName": "faction",
+    "pluralName": "factions",
+    "displayName": "Faction",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "text"
+    },
+    "lore": {
+      "type": "richtext"
+    },
+    "figurines": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::figurine.figurine",
+      "mappedBy": "faction"
+    }
+  }
+}

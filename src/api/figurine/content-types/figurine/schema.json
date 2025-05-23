@@ -1,0 +1,69 @@
+{
+  "kind": "collectionType",
+  "collectionName": "figurines",
+  "info": {
+    "singularName": "figurine",
+    "pluralName": "figurines",
+    "displayName": "Figurine",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "infanterie",
+        "véhicule",
+        "héro"
+      ]
+    },
+    "statut": {
+      "type": "enumeration",
+      "enum": [
+        "à peindre",
+        "en cours",
+        "terminé"
+      ]
+    },
+    "date_achat": {
+      "type": "date"
+    },
+    "photo": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos",
+        "audios"
+      ]
+    },
+    "notes": {
+      "type": "text"
+    },
+    "faction": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::faction.faction",
+      "inversedBy": "figurines"
+    },
+    "armies": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::army.army",
+      "mappedBy": "figurines"
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "figurines"
+    }
+  }
+}

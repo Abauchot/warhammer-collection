@@ -1,0 +1,39 @@
+{
+  "kind": "collectionType",
+  "collectionName": "armies",
+  "info": {
+    "singularName": "army",
+    "pluralName": "armies",
+    "displayName": "Army"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "name": {
+      "type": "string"
+    },
+    "figurines": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::figurine.figurine",
+      "inversedBy": "armies"
+    },
+    "users_permissions_user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "army"
+    },
+    "points_value": {
+      "type": "biginteger"
+    },
+    "game_format": {
+      "type": "enumeration",
+      "enum": [
+        "kill team",
+        "points value"
+      ]
+    }
+  }
+}
