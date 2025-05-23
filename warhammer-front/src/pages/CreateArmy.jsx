@@ -1,164 +1,146 @@
-import { useState, useEffect } from 'react'
-import axios from '../api/axios'
+import { useState } from 'react';
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Container,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
-export default function CreateArmy() {
+const CreateArmy = () => {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: '',
     points_value: '',
-    game_format: '',
-    figurines: []
-  })
-
-  const [figurinesDispo, setFigurinesDispo] = useState([])
-
-  useEffect(() => {
-    const fetchFigurines = async () => {
-      try {
-        const token = localStorage.getItem('token')
-        const user = JSON.parse(localStorage.getItem('user'))
-
-        console.log('Token:', token)
-        console.log('User:', user)
-
-        if (!user || !user.id) {
-          console.error('User ID is missing or invalid')
-          return
-        }
-
-        const res = await axios.get(
-          `/figurines?filters[users_permissions_user][id][$eq]=${user.id}&populate=faction`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        )
-
-        console.log('Response from /figurines:', res.data)
-
-        const data = res.data.data || []
-
-        const normalized = data.map(f => {
-          return {
-            id: f.id,
-            name: f.name || f.nom || 'Nom indisponible',
-            faction: f.faction?.name || 'Faction inconnue'
-          }
-        })
-
-        console.log('Normalized figurines:', normalized)
-        setFigurinesDispo(normalized)
-
-      } catch (err) {
-        console.error('Erreur chargement figurines :', err.response?.data || err.message)
-      }
-    }
-
-    fetchFigurines()
-  }, [])
+    game_format: 'points value',
+  });
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm({ ...form, [name]: value })
-  }
-
-  const handleFigurineToggle = (id) => {
-    setForm((prev) => ({
+    const { name, value } = e.target;
+    setForm(prev => ({
       ...prev,
-      figurines: prev.figurines.includes(id)
-        ? prev.figurines.filter((f) => f !== id)
-        : [...prev.figurines, id]
-    }))
-  }
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     try {
-      const token = localStorage.getItem('token')
-      const payload = {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user'));
+      
+      const data = {
         data: {
           name: form.name,
-          points_value: parseInt(form.points_value),
+          points_value: parseInt(form.points_value) || 0,
           game_format: form.game_format,
-          figurines: form.figurines
+          users_permissions_user: {
+            connect: [user.id]
+          }
         }
-      }
-      console.log('Payload for /armies:', payload)
+      };
 
-      await axios.post('/armies', payload, {
+      console.log('Envoi des données:', JSON.stringify(data, null, 2));
+
+      const response = await fetch('http://localhost:1337/api/armies', {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data)
+      });
 
-      alert('Armée créée avec succès !')
-      setForm({
-        name: '',
-        points_value: '',
-        game_format: '',
-        figurines: []
-      })
-    } catch (err) {
-      console.error('Erreur création armée :', err.response?.data || err.message)
+      const responseData = await response.json();
+      console.log('Réponse:', JSON.stringify(responseData, null, 2));
+
+      if (!response.ok) {
+        throw new Error(responseData.error?.message || 'Erreur lors de la création de l\'armée');
+      }
+
+      // Redirection vers la page des armées ou la collection
+      navigate('/collection');
+    } catch (error) {
+      console.error('Erreur:', error);
+      setError(error.message);
     }
-  }
+  };
 
   return (
-    <div className="max-w-xl mx-auto mt-10 p-4 border rounded shadow text-white">
-      <h2 className="text-2xl font-bold mb-4">Créer une armée</h2>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          name="name"
-          value={form.name}
-          onChange={handleChange}
-          placeholder="Nom de l’armée"
-          className="border p-2 rounded text-black"
-          required
-        />
+    <Container maxWidth="md">
+      <Box sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Créer une nouvelle armée
+        </Typography>
 
-        <input
-          name="points_value"
-          type="number"
-          value={form.points_value}
-          onChange={handleChange}
-          placeholder="Total de points"
-          className="border p-2 rounded text-black"
-          required
-        />
+        <Paper sx={{ p: 3, mt: 3 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Nom de l'armée"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+              margin="normal"
+            />
 
-        <select
-          name="game_format"
-          value={form.game_format}
-          onChange={handleChange}
-          className="border p-2 rounded text-black"
-          required
-        >
-          <option value="">Format de jeu</option>
-          <option value="kill team">Kill Team</option>
-          <option value="points value">Points Value</option>
-        </select>
+            <TextField
+              fullWidth
+              label="Points"
+              name="points_value"
+              type="number"
+              value={form.points_value}
+              onChange={handleChange}
+              margin="normal"
+            />
 
-        <div>
-          <p className="font-semibold mb-2">Sélectionner des figurines :</p>
-          <div className="flex flex-col gap-2 max-h-40 overflow-y-auto text-white">
-            {figurinesDispo.map(f => (
-              <label key={f.id} className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={form.figurines.includes(f.id)}
-                    onChange={() => handleFigurineToggle(f.id)}
-                  />
-                  <span className="font-medium">{f.name}</span>
-                </div>
-                <span className="italic text-gray-400">{f.faction}</span>
-              </label>
-            ))}
-          </div>
-        </div>
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Format de jeu</InputLabel>
+              <Select
+                name="game_format"
+                value={form.game_format}
+                onChange={handleChange}
+                required
+              >
+                <MenuItem value="kill team">Kill Team</MenuItem>
+                <MenuItem value="points value">Points Value</MenuItem>
+              </Select>
+            </FormControl>
 
-        <button type="submit" className="bg-black text-white p-2 rounded hover:bg-gray-700">
-          Créer
-        </button>
-      </form>
-    </div>
-  )
-}
+            {error && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {error}
+              </Typography>
+            )}
+
+            <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                type="submit"
+              >
+                Créer l'armée
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/collection')}
+              >
+                Annuler
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
+  );
+};
+
+export default CreateArmy;

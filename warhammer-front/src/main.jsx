@@ -1,8 +1,11 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import './index.css'
-import App from './App.jsx'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import '@fontsource/cinzel';
+import '@fontsource/roboto/300.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/500.css';
+import '@fontsource/roboto/700.css';
 
 // import pages
 import Login from './pages/Login.jsx'
@@ -12,18 +15,8 @@ import CreateFaction from './pages/CreateFaction.jsx'
 import CreateArmy from './pages/CreateArmy.jsx'
 import UserFigurines from './pages/userFigurines.jsx'
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/ajouter-figurine" element={<CreateFigurine />} />
-        <Route path="/ajouter-faction" element={<CreateFaction />} />
-        <Route path="/ajouter-armee" element={<CreateArmy />} />
-        <Route path="/mes-figurines" element={<UserFigurines />} />
-      </Routes>
-    </BrowserRouter>
-  </StrictMode>,
-)
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

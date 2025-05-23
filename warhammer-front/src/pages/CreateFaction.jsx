@@ -1,98 +1,138 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from '../api/axios'
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Container,
+} from '@mui/material'
 
-export default function CreateFaction() {
+const CreateFaction = () => {
   const navigate = useNavigate()
   const [form, setForm] = useState({
-    nom: '',
+    name: '',
     description: '',
-    couleurs: '',
-    lore: ''
+    lore: '',
   })
-  const [success, setSuccess] = useState(null)
+  const [error, setError] = useState(null)
 
   const handleChange = (e) => {
     const { name, value } = e.target
-    setForm({ ...form, [name]: value })
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }))
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       const token = localStorage.getItem('token')
-      await axios.post(
-        '/factions',
-        {
-          data: {
-            name: form.nom,
-            description: form.description,
-            lore: form.lore,
-          }
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+      
+      const data = {
+        data: {
+          name: form.name,
+          description: form.description,
+          lore: form.lore,
         }
-      )
+      }
 
-      setSuccess('Faction créée avec succès !')  // afficher le message
-      navigate('/', { replace: true })
-      setForm({ nom: '', description: '', lore: '' })
+      console.log('Envoi des données:', JSON.stringify(data, null, 2))
+
+      const response = await fetch('http://localhost:1337/api/factions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(data)
+      })
+
+      const responseData = await response.json()
+      console.log('Réponse:', JSON.stringify(responseData, null, 2))
+
+      if (!response.ok) {
+        throw new Error(responseData.error?.message || 'Erreur lors de la création de la faction')
+      }
+
+      // Redirection vers la page des factions ou la collection
+      navigate('/collection')
     } catch (error) {
-      console.error('Erreur :', error.response?.data || error.message)
+      console.error('Erreur:', error)
+      setError(error.message)
     }
   }
 
   return (
-    <div className="h-screen w-full bg-stone-900 text-stone-300 flex items-center justify-center p-4">
-      <div className="w-full max-w-md p-6 bg-stone-800 border-2 border-amber-600 rounded-lg shadow-xl">
-        <h2 className="text-3xl font-bold mb-4 text-amber-400 text-center">
-          Ajouter une faction
-        </h2>
-        {success && (
-          <div className="mb-4 p-3 bg-green-900/50 border border-green-700 rounded text-green-200">
-            {success}
-          </div>
-        )}
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <input
-            name="nom"
-            value={form.nom}
-            onChange={handleChange}
-            placeholder="Nom"
-            required
-            className="w-full bg-stone-700 text-stone-200 border border-stone-600 p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-          />
-          <textarea
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            placeholder="Description"
-            className="w-full bg-stone-700 text-stone-200 border border-stone-600 p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent h-24 resize-none"
-          />
-          <textarea
-            name="lore"
-            value={form.lore}
-            onChange={handleChange}
-            placeholder="Lore / Histoire"
-            className="w-full bg-stone-700 text-stone-200 border border-stone-600 p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent h-32 resize-none"
-          />
-          <button
-            type="submit"
-            className="w-full bg-amber-600 hover:bg-amber-500 text-amber-100 font-semibold py-3 px-6 border border-amber-500 rounded-md shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
-          >
-            Ajouter
-          </button>
-        </form>
-        <div className="mt-6 text-center">
-          <p className="text-stone-400">Retour à l’accueil ?</p>
-          <Link to="/" className="mt-2 inline-block text-amber-500 hover:text-amber-400">
-            Retour
-          </Link>
-        </div>
-      </div>
-    </div>
+    <Container maxWidth="md">
+      <Box sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Créer une nouvelle faction
+        </Typography>
+
+        <Paper sx={{ p: 3, mt: 3 }}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Nom de la faction"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              required
+              margin="normal"
+            />
+
+            <TextField
+              fullWidth
+              label="Description"
+              name="description"
+              value={form.description}
+              onChange={handleChange}
+              multiline
+              rows={3}
+              margin="normal"
+            />
+
+            <TextField
+              fullWidth
+              label="Histoire (Lore)"
+              name="lore"
+              value={form.lore}
+              onChange={handleChange}
+              multiline
+              rows={5}
+              margin="normal"
+            />
+
+            {error && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {error}
+              </Typography>
+            )}
+
+            <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                type="submit"
+              >
+                Créer la faction
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={() => navigate('/collection')}
+              >
+                Annuler
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+      </Box>
+    </Container>
   )
 }
+
+export default CreateFaction

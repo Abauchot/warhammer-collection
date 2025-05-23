@@ -1,87 +1,135 @@
 import { useState } from 'react'
-import axios from '../api/axios.js'
+import { Box, Typography, TextField, Button, Paper, Alert } from '@mui/material'
 import { Link, useNavigate } from 'react-router-dom'
 
-export default function Login() {
-  const [identifier, setIdentifier] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState(null)
-  const navigate = useNavigate()    // <— hook pour la redirection
+const Login = () => {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  })
+  const [error, setError] = useState('')
+  const navigate = useNavigate()
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }))
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const res = await axios.post('/auth/local', { identifier, password })
-      const { jwt, user } = res.data
-      localStorage.setItem('token', jwt)
-      localStorage.setItem('user', JSON.stringify(user))
-      console.log('✅ connecté en tant que', user)  // debug
-      navigate('/', { replace: true })              // <— redirection vers la home
+      const response = await fetch('http://localhost:1337/api/auth/local', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          identifier: formData.email,
+          password: formData.password,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (data.jwt) {
+        localStorage.setItem('token', data.jwt)
+        localStorage.setItem('user', JSON.stringify(data.user))
+        navigate('/collection')
+      } else {
+        setError('Identifiants invalides')
+      }
     } catch (err) {
-      setError('Identifiants invalides')
+      setError('Une erreur est survenue')
     }
   }
 
   return (
-    <div className="h-screen w-full bg-stone-900 text-stone-300 flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md p-6 bg-stone-800 border-2 border-amber-600 rounded-lg shadow-xl">
-        <h2 className="text-3xl font-bold mb-4 text-amber-400 text-center">Enter the Armoury</h2>
-        
+    <Box
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '80vh',
+      }}
+    >
+      <Paper
+        elevation={3}
+        sx={{
+          p: 4,
+          width: '100%',
+          maxWidth: 400,
+          backgroundColor: 'background.paper',
+          border: '1px solid',
+          borderColor: 'primary.main',
+        }}
+      >
+        <Typography variant="h4" component="h1" gutterBottom align="center" color="primary">
+          Connexion
+        </Typography>
+
         {error && (
-          <div className="mb-4 p-3 bg-red-900/50 border border-red-700 rounded text-red-200">
-            <p className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {error}
-            </p>
-          </div>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
         )}
-        
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Enter Identifier (Email or Username)"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              className="w-full bg-stone-700 text-stone-200 border border-stone-600 p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              required
-            />
-          </div>
-          
-          <div className="relative">
-            <input
-              type="password"
-              placeholder="Your Secret Code"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-stone-700 text-stone-200 border border-stone-600 p-3 rounded focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-              required
-            />
-          </div>
-          
-          <button 
-            type="submit" 
-            className="w-full bg-slate-700 hover:bg-slate-600 text-slate-100 font-semibold py-3 px-6 border border-slate-500 rounded-md shadow-md transition-all duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50 mt-2"
+
+        <form onSubmit={handleSubmit}>
+          <TextField
+            fullWidth
+            label="Email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            margin="normal"
+            variant="outlined"
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            fullWidth
+            label="Mot de passe"
+            name="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            margin="normal"
+            variant="outlined"
+            sx={{ mb: 3 }}
+          />
+
+          <Button
+            type="submit"
+            fullWidth
+            variant="contained"
+            color="primary"
+            size="large"
+            sx={{ mb: 2 }}
           >
-            Access Armoury
-          </button>
+            Se connecter
+          </Button>
+
+          <Typography variant="body2" align="center" sx={{ mt: 2 }}>
+            Pas encore de compte ?{' '}
+            <Link
+              to="/register"
+              style={{
+                color: '#d4af37',
+                textDecoration: 'none',
+              }}
+            >
+              Créer un compte
+            </Link>
+          </Typography>
         </form>
-        
-        <div className="mt-6 text-center">
-          <p className="text-stone-400">New to the battlefield?</p>
-          <Link to="/register" className="mt-2 inline-block text-amber-500 hover:text-amber-400">
-            Enlist as a New Recruit
-          </Link>
-        </div>
-      </div>
-      
-      <footer className="mt-8 text-center">
-        <p className="text-xs text-stone-500">
-          For the Emperor! Or, you know, for Chaos. Your choice.
-        </p>
-      </footer>
-    </div>
+      </Paper>
+    </Box>
   )
 }
+
+export default Login
