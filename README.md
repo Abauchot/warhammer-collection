@@ -1,61 +1,106 @@
-# 🚀 Getting started with Strapi
+# Guide d'Installation - Warhammer Collection
 
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
+Ce projet est composé de deux parties :
+1. Un backend Strapi
+2. Un frontend React
 
-### `develop`
+## Prérequis
 
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-develop)
+- Node.js (version 18.x ou supérieure, mais inférieure à 23.x)
+- npm (version 6.0.0 ou supérieure)
+- Git
 
+## Installation du Backend (Strapi)
+
+1. Clonez le repository :
+```bash
+git clone <https://github.com/Abauchot/warhammer-collection>
+cd warhammer-collection
 ```
+
+2. Installez les dépendances du backend :
+```bash
+npm install
+```
+
+3. Créez un fichier `.env` à la racine du projet avec les variables d'environnement suivantes :
+```
+HOST=0.0.0.0
+PORT=1337
+APP_KEYS="votre-clé-secrète"
+API_TOKEN_SALT="votre-salt"
+ADMIN_JWT_SECRET="votre-jwt-secret"
+JWT_SECRET="votre-jwt-secret"
+```
+
+4. Démarrez le serveur Strapi en mode développement :
+```bash
 npm run develop
-# or
-yarn develop
 ```
 
-### `start`
+Le backend sera accessible à l'adresse : http://localhost:1337
+Le panel d'administration Strapi sera accessible à : http://localhost:1337/admin
 
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-start)
+Lors du premier démarrage, vous devrez créer un compte administrateur.
 
-```
-npm run start
-# or
-yarn start
-```
+## Installation du Frontend (React)
 
-### `build`
-
-Build your admin panel. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-build)
-
-```
-npm run build
-# or
-yarn build
+1. Ouvrez un nouveau terminal et naviguez vers le dossier frontend :
+```bash
+cd warhammer-front
 ```
 
-## ⚙️ Deployment
-
-Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
-
-```
-yarn strapi deploy
+2. Installez les dépendances du frontend :
+```bash
+npm install
 ```
 
-## 📚 Learn more
+3. Créez un fichier `.env` dans le dossier `warhammer-front` avec :
+```
+VITE_API_URL=http://localhost:1337
+```
 
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://strapi.io/blog) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
+4. Démarrez l'application React :
+```bash
+npm run dev
+```
 
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
+Le frontend sera accessible à l'adresse : http://localhost:5173
 
-## ✨ Community
+## Configuration de la Base de Données
 
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
+Le projet utilise SQLite par défaut, qui ne nécessite pas de configuration supplémentaire.
+Les données seront stockées dans le dossier `database` du projet.
 
----
+## Problèmes Courants
 
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
+1. Si vous rencontrez des erreurs de dépendances :
+   - Supprimez les dossiers `node_modules`
+   - Supprimez les fichiers `package-lock.json`
+   - Réexécutez `npm install`
+
+2. Si le backend ne démarre pas :
+   - Vérifiez que le port 1337 n'est pas déjà utilisé
+   - Vérifiez les variables d'environnement
+
+3. Si le frontend ne se connecte pas au backend :
+   - Vérifiez que le backend est bien démarré
+   - Vérifiez l'URL dans le fichier `.env` du frontend
+
+## Versions des Dépendances Principales
+
+Backend (Strapi) :
+- Strapi : 5.12.5
+- Node.js : >=18.0.0 <=22.x.x
+- SQLite : 11.3.0
+
+Frontend :
+- React : 19.0.0
+- Vite : 6.3.1
+- Material-UI : 7.1.0
+- React Router : 7.6.0
+- Tailwind CSS : 4.1.4
+
+## Support
+
+Pour toute question ou problème d'installation, veuillez contacter l'équipe de développement.
