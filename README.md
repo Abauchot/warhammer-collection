@@ -4,7 +4,20 @@ Ce projet est composé de deux parties :
 1. Un backend Strapi
 2. Un frontend React
 
-## Prérequis
+Il existe deux méthodes d'installation : manuelle ou via l'installateur Windows.
+
+## Installation via l'Installateur Windows (Recommandé)
+
+1. Téléchargez le fichier `Warhammer-Collection-Setup.exe` depuis la section releases
+2. Exécutez le fichier d'installation
+3. Suivez les instructions à l'écran
+4. L'application se lancera automatiquement après l'installation
+
+L'installateur Windows configure automatiquement tout ce dont vous avez besoin !
+
+## Installation Manuelle (Pour les développeurs)
+
+### Prérequis
 
 - Node.js (version 18.x ou supérieure, mais inférieure à 23.x)
 - npm (version 6.0.0 ou supérieure)
@@ -104,3 +117,32 @@ Frontend :
 ## Support
 
 Pour toute question ou problème d'installation, veuillez contacter l'équipe de développement.
+
+## Création de l'Application Desktop
+
+Si vous souhaitez créer l'installateur Windows vous-même :
+
+1. Assurez-vous d'avoir d'abord construit le frontend :
+```bash
+cd warhammer-front
+npm run build
+```
+
+2. Construisez le backend Strapi en production :
+```bash
+cd ..
+npm run build
+```
+
+3. Installez les dépendances Electron :
+```bash
+cd electron
+npm install
+```
+
+4. Créez l'installateur Windows :
+```bash
+npm run dist
+```
+
+L'installateur sera généré dans le dossier `electron/dist`.
