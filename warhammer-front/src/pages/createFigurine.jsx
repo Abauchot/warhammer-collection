@@ -1,6 +1,8 @@
+// @ts-nocheck
+import React from 'react'
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom' // Import ajouté
-import axios from '../api/axios'
+import axios from '../apiServices/axios'
 
 export default function CreateFigurine() {
     const [form, setForm] = useState({
@@ -81,7 +83,7 @@ export default function CreateFigurine() {
 
             navigate('/') // Redirection vers la page d'accueil
         } catch (error) {
-            console.error('Erreur lors de l’envoi :', error.response?.data || error.message)
+            console.error('Erreur lors de l\'envoi :', error.response?.data || error.message)
         }
     }
 

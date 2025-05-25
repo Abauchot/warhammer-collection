@@ -7,4 +7,7 @@ export default defineConfig({
   plugins: [react(),
     tailwindcss()
   ],
+  resolve: {
+    extensions: ['.js', '.jsx']
+  }
 })

@@ -1,3 +1,5 @@
+// @ts-nocheck
+import React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -38,6 +40,9 @@ const Factions = () => {
 
   const fetchFactions = async () => {
     try {
+      setLoading(true);
+      setError(null);
+      
       const response = await fetch('http://localhost:1337/api/factions?populate=*', {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -51,20 +56,10 @@ const Factions = () => {
         throw new Error(data.error?.message || 'Erreur lors de la récupération des factions');
       }
 
-      // Adaptation des données pour correspondre à notre structure
-      const validFactions = (data.data || []).map(faction => ({
-        id: faction.id,
-        attributes: {
-          name: faction.name,
-          description: faction.description,
-          lore: faction.lore,
-          figurines: faction.figurines
-        }
-      }));
-
-      setFactions(validFactions);
+      // Utiliser directement les données de l'API
+      setFactions(data.data || []);
     } catch (error) {
-      console.error('Erreur détaillée:', error);
+      console.error('Erreur lors du chargement des factions:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -76,29 +71,31 @@ const Factions = () => {
   }, [token]);
 
   const handleEdit = (faction) => {
-    if (!faction?.attributes) {
+    if (!faction) {
       setError('Impossible de modifier cette faction : données invalides');
       return;
     }
     
-    // Stockage de l'ID et des données pour l'édition
-    setEditingFaction({
-      id: faction.id,
-      ...faction.attributes
-    });
-    
+    setEditingFaction(faction);
     setFormData({
-      name: faction.attributes.name || '',
-      description: faction.attributes.description || '',
-      lore: faction.attributes.lore || '',
+      name: faction.name || '',
+      description: faction.description || '',
+      lore: faction.lore || '',
     });
     setOpenDialog(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (faction) => {
+    if (!faction || !faction.documentId) {
+      console.error('DocumentID de faction invalide:', faction);
+      setError('DocumentID de faction invalide');
+      return;
+    }
+
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette faction ?')) {
       try {
-        const response = await fetch(`http://localhost:1337/api/factions/${id}`, {
+
+        const response = await fetch(`http://localhost:1337/api/factions/${faction.documentId}`, {
           method: 'DELETE',
           headers: {
             Authorization: `Bearer ${token}`,
@@ -106,15 +103,17 @@ const Factions = () => {
           },
         });
 
-        if (!response.ok) {
+        if (response.status === 204) {
+
+          setFactions(prevFactions => prevFactions.filter(f => f.documentId !== faction.documentId));
+          await fetchFactions();
+        } else {
           const data = await response.json();
-          console.error('Erreur de suppression:', data);
           throw new Error(data.error?.message || 'Erreur lors de la suppression de la faction');
         }
-
-        fetchFactions();
+        
       } catch (error) {
-        console.error('Erreur détaillée:', error);
+        console.error('Erreur lors de la suppression:', error);
         setError(error.message);
       }
     }
@@ -124,12 +123,11 @@ const Factions = () => {
     e.preventDefault();
     try {
       const url = editingFaction
-        ? `http://localhost:1337/api/factions/${editingFaction.id}?populate=*`
+        ? `http://localhost:1337/api/factions/${editingFaction.documentId}`
         : 'http://localhost:1337/api/factions';
       
       const method = editingFaction ? 'PUT' : 'POST';
 
-      // Structure correcte pour l'API Strapi v4
       const requestData = {
         data: {
           name: formData.name,
@@ -137,10 +135,6 @@ const Factions = () => {
           lore: formData.lore || ''
         }
       };
-      
-      console.log('URL:', url);
-      console.log('Méthode:', method);
-      console.log('Données envoyées:', requestData);
       
       const response = await fetch(url, {
         method,
@@ -152,17 +146,32 @@ const Factions = () => {
       });
 
       const responseData = await response.json();
-      console.log('Réponse reçue:', responseData);
       
       if (!response.ok) {
-        console.error('Erreur de réponse:', responseData);
         throw new Error(responseData.error?.message || `Erreur lors de la ${editingFaction ? 'modification' : 'création'} de la faction`);
       }
 
       setOpenDialog(false);
       setEditingFaction(null);
       setFormData({ name: '', description: '', lore: '' });
-      fetchFactions();
+      
+      // Mettre à jour la liste des factions
+      if (editingFaction) {
+        // Pour une modification, mettre à jour la faction dans la liste
+        setFactions(prevFactions => 
+          prevFactions.map(faction => 
+            faction.documentId === editingFaction.documentId 
+              ? { ...faction, ...responseData.data }
+              : faction
+          )
+        );
+      } else {
+        // Pour une création, ajouter la nouvelle faction à la liste
+        setFactions(prevFactions => [...prevFactions, responseData.data]);
+      }
+
+      // Recharger les données pour s'assurer de la synchronisation
+      await fetchFactions();
     } catch (error) {
       console.error('Erreur détaillée:', error);
       setError(error.message);
@@ -206,38 +215,41 @@ const Factions = () => {
 
         <Grid container spacing={3}>
           {factions.map((faction) => (
-            <Grid item xs={12} sm={6} md={4} key={faction.id}>
+            <Grid 
+              key={faction.documentId}
+              size={{ xs: 12, sm: 6, md: 4 }}
+            >
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    {faction.attributes.name || 'Sans nom'}
+                    {faction.name || 'Sans nom'}
                   </Typography>
-                  {faction.attributes.description && (
+                  {faction.description && (
                     <Typography variant="body2" color="text.secondary" paragraph>
-                      {faction.attributes.description}
+                      {faction.description}
                     </Typography>
                   )}
-                  {faction.attributes.lore && (
+                  {faction.lore && (
                     <Typography variant="body2" color="text.secondary">
-                      {faction.attributes.lore}
+                      {faction.lore}
                     </Typography>
                   )}
-                  {faction.attributes.figurines && faction.attributes.figurines.length > 0 && (
+                  {faction.figurines?.length > 0 && (
                     <Typography variant="body2" color="primary" sx={{ mt: 2 }}>
-                      Figurines: {faction.attributes.figurines.length}
+                      Figurines: {faction.figurines.length}
                     </Typography>
                   )}
                 </CardContent>
                 <CardActions>
                   <IconButton 
                     onClick={() => handleEdit(faction)}
-                    disabled={!faction.attributes}
+                    disabled={!faction}
                   >
                     <EditIcon />
                   </IconButton>
                   <IconButton 
-                    onClick={() => handleDelete(faction.id)}
-                    disabled={!faction.id}
+                    onClick={() => handleDelete(faction)}
+                    disabled={!faction}
                   >
                     <DeleteIcon />
                   </IconButton>

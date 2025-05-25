@@ -1,3 +1,5 @@
+// @ts-nocheck
+import React from 'react';
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -43,7 +45,7 @@ const Armies = () => {
 
   const fetchArmies = async () => {
     try {
-      const response = await fetch('http://localhost:1337/api/armies', {
+      const response = await fetch('http://localhost:1337/api/armies?populate=*', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -54,13 +56,22 @@ const Armies = () => {
         throw new Error(data.error?.message || 'Erreur lors de la récupération des armées');
       }
 
-      // Filtrer les armées pour n'afficher que celles de l'utilisateur connecté
-      const userArmies = data.data.filter(army => 
-        army.attributes.users_permissions_user?.data?.id === user.id
-      );
-      setArmies(userArmies);
+      // Traiter toutes les armées sans filtrage
+      const processedArmies = data.data.map(army => {
+        // Extraire les données soit de la racine, soit des attributs
+        const armyData = army.attributes || army;
+        return {
+          id: army.id,
+          documentId: armyData.documentId,
+          name: armyData.name,
+          points_value: armyData.points_value,
+          game_format: armyData.game_format,
+          users_permissions_user: armyData.users_permissions_user
+        };
+      });
+
+      setArmies(processedArmies);
     } catch (error) {
-      console.error('Erreur:', error);
       setError(error.message);
     } finally {
       setLoading(false);
@@ -72,32 +83,37 @@ const Armies = () => {
   }, [token, user.id]);
 
   const handleEdit = (army) => {
+    if (!army || !army.documentId) {
+      setError('Données de l\'armée invalides');
+      return;
+    }
     setEditingArmy(army);
     setFormData({
-      name: army.attributes.name,
-      points_value: army.attributes.points_value || '',
-      game_format: army.attributes.game_format || 'points value',
+      name: army.name || '',
+      points_value: army.points_value || '',
+      game_format: army.game_format || 'points value',
     });
     setOpenDialog(true);
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (army) => {
+    if (!army || !army.documentId) {
+      setError('DocumentID d\'armée invalide');
+      return;
+    }
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cette armée ?')) {
       try {
-        const response = await fetch(`http://localhost:1337/api/armies/${id}`, {
+        const response = await fetch(`http://localhost:1337/api/armies/${army.documentId}`, {
           method: 'DELETE',
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
-        if (!response.ok) {
-          throw new Error('Erreur lors de la suppression de l\'armée');
+        if (response.status === 204) {
+          await fetchArmies();
+        } else {
+          const data = await response.json();
+          throw new Error(data.error?.message || 'Erreur lors de la suppression de l\'armée');
         }
-
-        fetchArmies();
       } catch (error) {
-        console.error('Erreur:', error);
         setError(error.message);
       }
     }
@@ -107,42 +123,36 @@ const Armies = () => {
     e.preventDefault();
     try {
       const url = editingArmy
-        ? `http://localhost:1337/api/armies/${editingArmy.id}`
+        ? `http://localhost:1337/api/armies/${editingArmy.documentId}`
         : 'http://localhost:1337/api/armies';
-      
       const method = editingArmy ? 'PUT' : 'POST';
-      
-      const data = {
+      const requestData = {
         data: {
-          ...formData,
+          name: formData.name,
           points_value: parseInt(formData.points_value) || 0,
-          users_permissions_user: {
-            connect: [user.id]
-          }
+          game_format: formData.game_format,
         }
       };
-
+      if (!editingArmy) {
+        requestData.data.users_permissions_user = { connect: [user.id] };
+      }
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify(requestData),
       });
-
       const responseData = await response.json();
-      
       if (!response.ok) {
         throw new Error(responseData.error?.message || 'Erreur lors de la sauvegarde de l\'armée');
       }
-
       setOpenDialog(false);
       setEditingArmy(null);
       setFormData({ name: '', points_value: '', game_format: 'points value' });
-      fetchArmies();
+      await fetchArmies();
     } catch (error) {
-      console.error('Erreur:', error);
       setError(error.message);
     }
   };
@@ -182,26 +192,46 @@ const Armies = () => {
           </Typography>
         )}
 
-        <Grid container spacing={3}>
+        <Grid container spacing={2}>
           {armies.map((army) => (
-            <Grid item xs={12} sm={6} md={4} key={army.id}>
-              <Card>
+            <Grid 
+              key={army.documentId}
+              container
+              spacing={2}
+              direction="column"
+              style={{ 
+                flex: '0 0 auto',
+                width: {
+                  xs: '100%',
+                  sm: '50%',
+                  md: '33.333%'
+                },
+                padding: '16px'
+              }}
+            >
+              <Card sx={{ height: '100%' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    {army.attributes.name}
+                    {army.name || 'Sans nom'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Format: {army.attributes.game_format}
+                    Format: {army.game_format || 'Non spécifié'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    Points: {army.attributes.points_value || 0}
+                    Points: {army.points_value || 0}
                   </Typography>
                 </CardContent>
                 <CardActions>
-                  <IconButton onClick={() => handleEdit(army)}>
+                  <IconButton 
+                    onClick={() => handleEdit(army)}
+                    disabled={!army.documentId}
+                  >
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(army.id)}>
+                  <IconButton 
+                    onClick={() => handleDelete(army)}
+                    disabled={!army.documentId}
+                  >
                     <DeleteIcon />
                   </IconButton>
                 </CardActions>

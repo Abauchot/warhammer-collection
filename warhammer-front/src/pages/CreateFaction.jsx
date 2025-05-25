@@ -1,6 +1,8 @@
+// @ts-nocheck
+import React from 'react'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from '../api/axios'
+import axios from '../apiServices/axios'
 import {
   Box,
   Typography,
@@ -40,8 +42,6 @@ const CreateFaction = () => {
         }
       }
 
-      console.log('Envoi des données:', JSON.stringify(data, null, 2))
-
       const response = await fetch('http://localhost:1337/api/factions', {
         method: 'POST',
         headers: {
@@ -52,7 +52,6 @@ const CreateFaction = () => {
       })
 
       const responseData = await response.json()
-      console.log('Réponse:', JSON.stringify(responseData, null, 2))
 
       if (!response.ok) {
         throw new Error(responseData.error?.message || 'Erreur lors de la création de la faction')

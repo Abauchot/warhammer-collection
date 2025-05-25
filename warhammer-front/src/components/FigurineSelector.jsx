@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import axios from '../api/axios';
+import axios from '../apiServices/axios';
 
 export default function FigurineSelector({ selected, onToggle }) {
   const [figurines, setFigurines] = useState([]);

@@ -1,3 +1,5 @@
+// @ts-nocheck
+import React from 'react';
 import { useState } from 'react';
 import {
   Box,
@@ -47,8 +49,6 @@ const CreateArmy = () => {
         }
       };
 
-      console.log('Envoi des données:', JSON.stringify(data, null, 2));
-
       const response = await fetch('http://localhost:1337/api/armies', {
         method: 'POST',
         headers: {
@@ -59,7 +59,6 @@ const CreateArmy = () => {
       });
 
       const responseData = await response.json();
-      console.log('Réponse:', JSON.stringify(responseData, null, 2));
 
       if (!response.ok) {
         throw new Error(responseData.error?.message || 'Erreur lors de la création de l\'armée');
@@ -68,7 +67,6 @@ const CreateArmy = () => {
       // Redirection vers la page des armées ou la collection
       navigate('/collection');
     } catch (error) {
-      console.error('Erreur:', error);
       setError(error.message);
     }
   };
