@@ -324,11 +324,11 @@ const Collection = () => {
             xs={12} sm={6} md={4}
           >
             <Card>
-              {figurine.photo && (
+              {figurine.photo && figurine.photo.length > 0 && (
                 <CardMedia
                   component="img"
                   height="200"
-                  image={`http://localhost:1337${figurine.photo.url}`}
+                  image={`http://localhost:1337${figurine.photo[0].url}`}
                   alt={figurine.name}
                 />
               )}
